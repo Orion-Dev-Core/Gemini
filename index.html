@@ -1,159 +1,72 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ORION INTERNATIONAL - Professional Information Agents</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <style>
-        /* [KEEP YOUR ORIGINAL CSS ROOT AND ANIMATIONS UNCHANGED] */
-        :root {
-            --primary: #D4AF37; /* Switched to Orion Gold */
-            --secondary: #004d40; /* Switched to Orion Bottle Green */
-            --dark: #0a0e27;
-            --darker: #050714;
-            --accent: #D4AF37;
-            --text: #e8e9f3;
-            --text-muted: #8b92b5;
-        }
-        /* ... Keep all existing CSS from your provided code ... */
-    </style>
-</head>
-<body>
-    <div class="bg-grid"></div>
-    <div class="orb-glow orb-1"></div>
-    <div class="orb-glow orb-2"></div>
+/**
+ * ORION'S HUNT: LEGEND EDITION
+ * Built by Claude | Powered by Gemini 2.0 Flash
+ */
 
-    <nav>
-        <div class="logo">
-            <div class="logo-icon">
-                <i class="fas fa-star"></i>
-            </div>
-            <span>ORION INTERNATIONAL</span>
-        </div>
-        <button class="menu-toggle" onclick="toggleMenu()">
-            <i class="fas fa-bars"></i>
-        </button>
-        <div class="nav-links" id="navLinks">
-            <a href="#features">The Agent</a>
-            <a href="#pricing">Tiers</a>
-            <a href="#about">The Universe</a>
-            <a href="#contact">Compliance</a>
-            <a href="#" class="cta-btn">Book Demo</a>
-        </div>
-    </nav>
+function doGet() {
+  return HtmlService.createHtmlOutputFromFile('Index')
+    .setTitle("ORION'S HUNT: LEGEND EDITION")
+    .addMetaTag('viewport', 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no')
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
 
-    <section class="hero">
-        <div class="hero-content">
-            <div class="hero-badge">
-                <i class="fas fa-crown"></i> 5-Star Professional Information Agent
-            </div>
-            <h1>Elite Guest Intelligence for World-Class Hotels</h1>
-            <p>Deploy a closed-loop AI Concierge that masters your menus, protocols, and guest requests. Automate inquiries and capture verified leads for your reservations team 24/7.</p>
-            <div class="hero-buttons">
-                <a href="#pricing" class="cta-btn">Deploy Your Agent</a>
-                <a href="#features" class="btn-secondary">Explore Capabilities</a>
-            </div>
-        </div>
-    </section>
+function logGameData(data) {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const sheet = ss.getSheetByName('GameLogs') || ss.insertSheet('GameLogs');
+    
+    sheet.appendRow([
+      new Date(), 
+      data.event, 
+      data.score || 0,
+      data.combo || 0,
+      JSON.stringify(data.details)
+    ]);
+    
+    if (sheet.getLastRow() === 1) {
+      sheet.getRange(1, 1, 1, 5).setValues([['Timestamp', 'Event', 'Score', 'Combo', 'Details']]);
+    }
+  } catch(e) { 
+    Logger.log("Logger Error: " + e.message); 
+  }
+}
 
-    <section class="section" id="features">
-        <div class="section-header">
-            <div class="section-badge">ELITE CAPABILITIES</div>
-            <h2>Hospitality Intelligence Redefined</h2>
-            <p class="section-subtitle">A professional layer between your guests and your team, designed to harvest leads and ensure excellence.</p>
-        </div>
-        <div class="features-grid">
-            <div class="feature-card">
-                <div class="feature-icon"><i class="fas fa-concierge-bell"></i></div>
-                <h3>Closed-Loop Intelligence</h3>
-                <p>Our agents only use the data you provide. No hallucinations, no external links—just pure hotel expertise.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon"><i class="fas fa-user-check"></i></div>
-                <h3>Verified Lead Capture</h3>
-                <p>Instead of sending guests to broken links, we capture names and emails and hand them to your reservations team.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon"><i class="fas fa-utensils"></i></div>
-                <h3>Menu & Spa Mastery</h3>
-                <p>Trained on your complex dining hours, spa brochures, and seasonal offerings for instant guest clarity.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon"><i class="fas fa-shield-alt"></i></div>
-                <h3>POPIA Compliant</h3>
-                <p>Bank-grade data handling ensuring guest privacy and full South African regulatory compliance.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon"><i class="fas fa-clock"></i></div>
-                <h3>48-Hour Deployment</h3>
-                <p>From info-receipt to live deployment on your site and QR codes in under two days.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon"><i class="fas fa-bell"></i></div>
-                <h3>Emergency Alerts</h3>
-                <p>High-priority Discord triggers for VIP requests or management escalations.</p>
-            </div>
-        </div>
-    </section>
+function sendToGemini(payload) {
+  const apiKey = PropertiesService.getScriptProperties().getProperty('GEMINI_API_KEY');
+  const url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=" + apiKey;
+  
+  const options = {
+    method: 'post',
+    contentType: 'application/json',
+    payload: JSON.stringify(payload),
+    muteHttpExceptions: true
+  };
+  
+  try {
+    const response = UrlFetchApp.fetch(url, options);
+    const result = JSON.parse(response.getContentText());
+    if (result.candidates && result.candidates[0]) {
+      return { success: true, text: result.candidates[0].content.parts[0].text };
+    }
+    return { success: false, error: "Constellation link severed." };
+  } catch(e) { 
+    return { success: false, error: e.message }; 
+  }
+}
 
-    <section class="section" id="pricing">
-        <div class="section-header">
-            <div class="section-badge">INVESTMENT TIERS</div>
-            <h2>Tailored To Your Property</h2>
-            <p class="section-subtitle">Bespoke pricing based on complexity and value</p>
-        </div>
-        <div class="pricing-grid">
-            <div class="pricing-card">
-                <div class="pricing-badge">3-STAR</div>
-                <h3>Essential Agent</h3>
-                <div class="pricing-price">$149<span style="font-size: 16px;"> Setup</span></div>
-                <p style="color: var(--text-muted); margin-bottom: 20px;">$39/mo thereafter</p>
-                <ul class="pricing-features">
-                    <li><i class="fas fa-check"></i> Core Hotel FAQs</li>
-                    <li><i class="fas fa-check"></i> Check-in/Out Protocols</li>
-                    <li><i class="fas fa-check"></i> WiFi & Parking Info</li>
-                    <li><i class="fas fa-check"></i> Standard Discord Alerts</li>
-                </ul>
-                <a href="#" class="cta-btn" style="width: 100%; text-align: center;">Get Started</a>
-            </div>
-            
-            <div class="pricing-card featured">
-                <div class="pricing-badge">4-STAR PROFESSIONAL</div>
-                <h3>Upsell Master</h3>
-                <div class="pricing-price">$249<span style="font-size: 16px;"> Setup</span></div>
-                <p style="color: var(--text-muted); margin-bottom: 20px;">$59/mo thereafter</p>
-                <ul class="pricing-features">
-                    <li><i class="fas fa-check"></i> Full Restaurant Menus</li>
-                    <li><i class="fas fa-check"></i> Spa & Wellness Integration</li>
-                    <li><i class="fas fa-check"></i> Local Area Expertise</li>
-                    <li><i class="fas fa-check"></i> Advanced Lead Capture</li>
-                    <li><i class="fas fa-check"></i> Priority Setup</li>
-                </ul>
-                <a href="#" class="cta-btn" style="width: 100%; text-align: center;">Choose Pro</a>
-            </div>
-            
-            <div class="pricing-card">
-                <div class="pricing-badge">5-STAR ELITE</div>
-                <h3>The Universe Mode</h3>
-                <div class="pricing-price">$399<span style="font-size: 16px;"> Setup</span></div>
-                <p style="color: var(--text-muted); margin-bottom: 20px;">$99/mo thereafter</p>
-                <ul class="pricing-features">
-                    <li><i class="fas fa-check"></i> Multi-Property Logic (Nebula)</li>
-                    <li><i class="fas fa-check"></i> VIP Escalation Protocols</li>
-                    <li><i class="fas fa-check"></i> Dineplan System Integration</li>
-                    <li><i class="fas fa-check"></i> High-Volume Processing</li>
-                    <li><i class="fas fa-check"></i> SLA Uptime Guarantee</li>
-                </ul>
-                <a href="#" class="btn-secondary" style="width: 100%; text-align: center;">Contact Orion Elite</a>
-            </div>
-        </div>
-    </section>
-
-    <footer>
-        <div class="footer-bottom">
-            <p>&copy; 2025 Orion Dev Core. Professional Information Agent Solutions. POPIA Compliant.</p>
-        </div>
-    </footer>
-</body>
-</html>
+function getPlayerStats() {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const sheet = ss.getSheetByName('GameLogs');
+    if (!sheet) return { totalShots: 0, highScore: 0, totalSessions: 0 };
+    
+    const data = sheet.getDataRange().getValues();
+    const shots = data.filter(r => r[1] === 'STRIKE').length;
+    const scores = data.filter(r => r[2] > 0).map(r => r[2]);
+    const highScore = scores.length ? Math.max(...scores) : 0;
+    
+    return { totalShots: shots, highScore: highScore, totalSessions: data.length - 1 };
+  } catch(e) {
+    return { totalShots: 0, highScore: 0, totalSessions: 0 };
+  }
+}
