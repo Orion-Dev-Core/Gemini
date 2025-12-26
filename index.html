@@ -1,72 +1,989 @@
-/**
- * ORION'S HUNT: LEGEND EDITION
- * Built by Claude | Powered by Gemini 2.0 Flash
- */
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ORION DEV CORE - AI Amplifies. I Create.</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..900;1,6..96,400..900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-function doGet() {
-  return HtmlService.createHtmlOutputFromFile('Index')
-    .setTitle("ORION'S HUNT: LEGEND EDITION")
-    .addMetaTag('viewport', 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no')
-    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
-}
+        :root {
+            --bg-dark: #0a0e27;
+            --bg-card: #12182e;
+            --accent-blue: #00d4ff;
+            --accent-purple: #7b2cbf;
+            --text-primary: #ffffff;
+            --text-secondary: #a0aec0;
+            --gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
 
-function logGameData(data) {
-  try {
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
-    const sheet = ss.getSheetByName('GameLogs') || ss.insertSheet('GameLogs');
-    
-    sheet.appendRow([
-      new Date(), 
-      data.event, 
-      data.score || 0,
-      data.combo || 0,
-      JSON.stringify(data.details)
-    ]);
-    
-    if (sheet.getLastRow() === 1) {
-      sheet.getRange(1, 1, 1, 5).setValues([['Timestamp', 'Event', 'Score', 'Combo', 'Details']]);
-    }
-  } catch(e) { 
-    Logger.log("Logger Error: " + e.message); 
-  }
-}
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
 
-function sendToGemini(payload) {
-  const apiKey = PropertiesService.getScriptProperties().getProperty('GEMINI_API_KEY');
-  const url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=" + apiKey;
-  
-  const options = {
-    method: 'post',
-    contentType: 'application/json',
-    payload: JSON.stringify(payload),
-    muteHttpExceptions: true
-  };
-  
-  try {
-    const response = UrlFetchApp.fetch(url, options);
-    const result = JSON.parse(response.getContentText());
-    if (result.candidates && result.candidates[0]) {
-      return { success: true, text: result.candidates[0].content.parts[0].text };
-    }
-    return { success: false, error: "Constellation link severed." };
-  } catch(e) { 
-    return { success: false, error: e.message }; 
-  }
-}
+        h1, h2, h3, h4 {
+            font-family: 'Bodoni Moda', serif;
+            font-weight: 700;
+        }
 
-function getPlayerStats() {
-  try {
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
-    const sheet = ss.getSheetByName('GameLogs');
-    if (!sheet) return { totalShots: 0, highScore: 0, totalSessions: 0 };
-    
-    const data = sheet.getDataRange().getValues();
-    const shots = data.filter(r => r[1] === 'STRIKE').length;
-    const scores = data.filter(r => r[2] > 0).map(r => r[2]);
-    const highScore = scores.length ? Math.max(...scores) : 0;
-    
-    return { totalShots: shots, highScore: highScore, totalSessions: data.length - 1 };
-  } catch(e) {
-    return { totalShots: 0, highScore: 0, totalSessions: 0 };
-  }
-}
+        /* Animated Background */
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            opacity: 0.15;
+        }
+
+        .constellation {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            background: var(--accent-blue);
+            border-radius: 50%;
+            animation: twinkle 4s infinite;
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.1; }
+            50% { opacity: 0.8; }
+        }
+
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            padding: 1.5rem 5%;
+            background: rgba(10, 14, 39, 0.98);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            border-bottom: 1px solid rgba(0, 212, 255, 0.05);
+        }
+
+        nav .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-family: 'Bodoni Moda', serif;
+            font-size: 1.4rem;
+            font-weight: 700;
+            letter-spacing: 3px;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 3rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: color 0.3s;
+            font-size: 0.95rem;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+
+        .nav-links a:hover {
+            color: var(--accent-blue);
+        }
+
+        /* Container */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 5%;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding-top: 80px;
+        }
+
+        .hero-content {
+            animation: fadeInUp 1s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .hero h1 {
+            font-size: 4.5rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            letter-spacing: 4px;
+            line-height: 1.1;
+        }
+
+        .hero .subtitle {
+            font-family: 'Bodoni Moda', serif;
+            font-size: 2rem;
+            color: var(--accent-blue);
+            margin-bottom: 1.5rem;
+            font-weight: 400;
+            font-style: italic;
+        }
+
+        .hero .tagline {
+            font-size: 1.15rem;
+            color: var(--text-secondary);
+            margin-bottom: 3.5rem;
+            max-width: 650px;
+            margin-left: auto;
+            margin-right: auto;
+            font-weight: 300;
+            letter-spacing: 0.3px;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 1.5rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 1.1rem 3rem;
+            border: none;
+            border-radius: 2px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+            position: relative;
+        }
+
+        .btn-primary {
+            background: var(--gradient);
+            color: white;
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+        }
+
+        .btn-primary::after {
+            content: '';
+            position: absolute;
+            bottom: -3px;
+            left: 10%;
+            right: 10%;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, rgba(255, 215, 0, 0.8), rgba(255, 223, 0, 1), rgba(255, 215, 0, 0.8), transparent);
+            border-radius: 2px;
+            opacity: 0.7;
+            filter: blur(4px);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 40px rgba(102, 126, 234, 0.4), 0 5px 20px rgba(255, 215, 0, 0.5);
+        }
+
+        .btn-primary:hover::after {
+            opacity: 1;
+            filter: blur(6px);
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.8);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            border: 1px solid var(--accent-blue);
+            color: var(--accent-blue);
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.2);
+        }
+
+        .btn-secondary::after {
+            content: '';
+            position: absolute;
+            bottom: -3px;
+            left: 10%;
+            right: 10%;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, rgba(255, 215, 0, 0.6), rgba(255, 223, 0, 0.8), rgba(255, 215, 0, 0.6), transparent);
+            border-radius: 2px;
+            opacity: 0.5;
+            filter: blur(3px);
+        }
+
+        .btn-secondary:hover {
+            background: var(--accent-blue);
+            color: var(--bg-dark);
+            box-shadow: 0 15px 40px rgba(0, 212, 255, 0.3), 0 5px 20px rgba(255, 215, 0, 0.4);
+        }
+
+        .btn-secondary:hover::after {
+            opacity: 0.9;
+            filter: blur(5px);
+        }
+
+        /* Live Demo Section */
+        .live-demo {
+            padding: 8rem 0;
+            background: rgba(18, 24, 46, 0.3);
+        }
+
+        .live-demo h2 {
+            font-size: 3rem;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .demo-subtitle {
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 1.2rem;
+            margin-bottom: 4rem;
+            font-weight: 300;
+        }
+
+        .chat-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: var(--bg-card);
+            border-radius: 2px;
+            padding: 3rem;
+            border: 1px solid rgba(0, 212, 255, 0.15);
+            box-shadow: 0 25px 70px rgba(0, 0, 0, 0.6);
+        }
+
+        .chat-placeholder {
+            text-align: center;
+            padding: 5rem 2rem;
+            color: var(--text-secondary);
+        }
+
+        .chat-placeholder p {
+            margin-bottom: 1.5rem;
+            font-size: 1.1rem;
+        }
+
+        .chat-placeholder strong {
+            font-family: 'Bodoni Moda', serif;
+            font-size: 1.8rem;
+            color: var(--text-primary);
+            display: block;
+            margin-bottom: 2rem;
+        }
+
+        /* Products Section */
+        .products {
+            padding: 8rem 0;
+        }
+
+        .section-title {
+            font-size: 3rem;
+            text-align: center;
+            margin-bottom: 5rem;
+            letter-spacing: 1px;
+        }
+
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2.5rem;
+        }
+
+        .product-card {
+            background: var(--bg-card);
+            padding: 3rem;
+            border-radius: 2px;
+            border: 1px solid rgba(0, 212, 255, 0.08);
+            transition: all 0.4s;
+            border-left: 2px solid transparent;
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+            border-left-color: var(--accent-blue);
+            box-shadow: 0 15px 50px rgba(0, 212, 255, 0.15);
+        }
+
+        .product-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1.2rem;
+            color: var(--text-primary);
+            letter-spacing: 0.5px;
+        }
+
+        .product-card p {
+            color: var(--text-secondary);
+            line-height: 1.7;
+            font-weight: 300;
+        }
+
+        /* Sectors Section */
+        .sectors {
+            padding: 8rem 0;
+            background: rgba(18, 24, 46, 0.3);
+        }
+
+        .sector-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2.5rem;
+        }
+
+        .sector-card {
+            background: var(--bg-card);
+            padding: 2.5rem;
+            border-radius: 2px;
+            border-left: 3px solid var(--accent-blue);
+            transition: all 0.3s;
+        }
+
+        .sector-card:hover {
+            transform: translateX(5px);
+            box-shadow: 0 10px 40px rgba(0, 212, 255, 0.1);
+        }
+
+        .sector-card h3 {
+            font-size: 1.4rem;
+            margin-bottom: 1.5rem;
+            letter-spacing: 0.5px;
+        }
+
+        .sector-card ul {
+            list-style: none;
+            color: var(--text-secondary);
+        }
+
+        .sector-card li {
+            padding: 0.7rem 0;
+            padding-left: 1.5rem;
+            position: relative;
+            font-weight: 300;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        .sector-card li:last-child {
+            border-bottom: none;
+        }
+
+        .sector-card li:before {
+            content: "—";
+            position: absolute;
+            left: 0;
+            color: var(--accent-blue);
+        }
+
+        /* Founder Section */
+        .founder {
+            padding: 8rem 0;
+        }
+
+        .founder-content {
+            max-width: 1000px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 240px 1fr;
+            gap: 4rem;
+            align-items: center;
+        }
+
+        .founder-image {
+            width: 240px;
+            height: 240px;
+            border-radius: 2px;
+            background: var(--gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Bodoni Moda', serif;
+            font-size: 5rem;
+            border: 2px solid var(--accent-blue);
+            color: white;
+        }
+
+        .founder-text h3 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            letter-spacing: 1px;
+        }
+
+        .founder-text .title {
+            color: var(--accent-blue);
+            font-size: 1.1rem;
+            margin-bottom: 2rem;
+            font-weight: 400;
+        }
+
+        .founder-text p {
+            color: var(--text-secondary);
+            line-height: 1.9;
+            font-size: 1.1rem;
+            font-weight: 300;
+        }
+
+        .contact-details {
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(0, 212, 255, 0.1);
+        }
+
+        .contact-details p {
+            margin: 0.8rem 0;
+            font-size: 1rem;
+        }
+
+        .contact-details a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .contact-details a:hover {
+            color: var(--text-primary);
+        }
+
+        /* Mission Section */
+        .mission {
+            padding: 8rem 0;
+            background: rgba(18, 24, 46, 0.3);
+            text-align: center;
+        }
+
+        .mission-content {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .mission h2 {
+            font-size: 3rem;
+            margin-bottom: 2.5rem;
+            letter-spacing: 1px;
+        }
+
+        .mission p {
+            font-size: 1.3rem;
+            color: var(--text-secondary);
+            line-height: 1.9;
+            font-weight: 300;
+        }
+
+        /* Values Section */
+        .values {
+            padding: 8rem 0;
+        }
+
+        .values-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 3rem;
+        }
+
+        .value-card {
+            text-align: left;
+            padding: 2.5rem;
+            background: var(--bg-card);
+            border-radius: 2px;
+            border-top: 2px solid var(--accent-blue);
+            transition: all 0.3s;
+        }
+
+        .value-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 40px rgba(0, 212, 255, 0.1);
+        }
+
+        .value-card h3 {
+            font-size: 1.3rem;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+            letter-spacing: 0.5px;
+        }
+
+        .value-card p {
+            color: var(--text-secondary);
+            line-height: 1.8;
+            font-weight: 300;
+        }
+
+        /* Conversion Section */
+        .conversion {
+            padding: 8rem 0;
+            background: var(--gradient);
+        }
+
+        .conversion-content {
+            max-width: 650px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .conversion h2 {
+            font-size: 3rem;
+            margin-bottom: 1.5rem;
+            letter-spacing: 1px;
+        }
+
+        .conversion .subtext {
+            font-size: 1.2rem;
+            margin-bottom: 4rem;
+            opacity: 0.95;
+            font-weight: 300;
+        }
+
+        .contact-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1.2rem;
+        }
+
+        .contact-form input,
+        .contact-form select {
+            padding: 1.2rem;
+            border: none;
+            border-radius: 2px;
+            font-size: 1rem;
+            background: rgba(255, 255, 255, 0.98);
+            font-family: 'Inter', sans-serif;
+            border: 1px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .contact-form input:focus,
+        .contact-form select:focus {
+            outline: none;
+            border-color: var(--bg-dark);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .contact-form button {
+            padding: 1.3rem;
+            background: var(--bg-dark);
+            color: white;
+            border: none;
+            border-radius: 2px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+        }
+
+        .contact-form button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        /* Footer */
+        footer {
+            padding: 4rem 0 2rem;
+            background: var(--bg-card);
+            border-top: 1px solid rgba(0, 212, 255, 0.08);
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 3rem;
+            margin-bottom: 3rem;
+        }
+
+        .footer-section h4 {
+            font-family: 'Bodoni Moda', serif;
+            margin-bottom: 1.5rem;
+            color: var(--accent-blue);
+            font-size: 1.2rem;
+            letter-spacing: 1px;
+        }
+
+        .footer-section ul {
+            list-style: none;
+        }
+
+        .footer-section a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            display: block;
+            padding: 0.5rem 0;
+            transition: color 0.3s;
+            font-weight: 300;
+        }
+
+        .footer-section a:hover {
+            color: var(--accent-blue);
+        }
+
+        .footer-section p {
+            color: var(--text-secondary);
+            font-weight: 300;
+            line-height: 1.8;
+        }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: 2.5rem;
+            border-top: 1px solid rgba(0, 212, 255, 0.08);
+            color: var(--text-secondary);
+        }
+
+        .footer-bottom p {
+            margin: 0.7rem 0;
+            font-weight: 300;
+        }
+
+        .claude-credit {
+            margin-top: 1.5rem;
+            font-size: 0.9rem;
+            opacity: 0.6;
+        }
+
+        /* Responsive */
+        @media (max-width: 968px) {
+            .hero h1 {
+                font-size: 3rem;
+            }
+            
+            .hero .subtitle {
+                font-size: 1.5rem;
+            }
+
+            .founder-content {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+
+            .founder-image {
+                margin: 0 auto;
+            }
+
+            .value-card {
+                text-align: center;
+            }
+
+            .product-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+
+            .section-title {
+                font-size: 2.2rem;
+            }
+
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Animated Background -->
+    <div class="bg-animation" id="constellation"></div>
+
+    <!-- Navigation -->
+    <nav>
+        <div class="container">
+            <div class="logo">ORION DEV CORE</div>
+            <ul class="nav-links">
+                <li><a href="#products">Products</a></li>
+                <li><a href="#sectors">Sectors</a></li>
+                <li><a href="#mission">Mission</a></li>
+                <li><a href="#contact">Contact</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <h1>ORION DEV CORE</h1>
+                <p class="subtitle">AI Amplifies. I Create.</p>
+                <p class="tagline">We are building the next generation of AI-driven business solutions. Want to be part of the Core?</p>
+                <div class="cta-buttons">
+                    <a href="#live-demo" class="btn btn-primary">Speak to ORION Live</a>
+                    <a href="#products" class="btn btn-secondary">See How It Works</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Live Demo Section -->
+    <section class="live-demo" id="live-demo">
+        <div class="container">
+            <h2>Talk to ORION. Right Now.</h2>
+            <p class="demo-subtitle">This is not a support bot. This is a business architect.</p>
+            <div class="chat-container">
+                <!-- Replace this placeholder with your actual chat embed code -->
+                <div class="chat-placeholder">
+                    <strong>ORION AI Interface</strong>
+                    <p>"Welcome to Orion Dev Core. Tell me what kind of business you run, and I'll design your automation stack."</p>
+                    <p style="margin-top: 3rem; font-size: 0.9rem; opacity: 0.6;">[ Insert your live chat widget code here ]</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Products Section -->
+    <section class="products" id="products">
+        <div class="container">
+            <h2 class="section-title">What We Build at the Core</h2>
+            <div class="product-grid">
+                <div class="product-card">
+                    <h3>AI-Powered Onboarding</h3>
+                    <p>Automated client intake and verification systems that reduce manual work by 90% while maintaining security and compliance.</p>
+                </div>
+                <div class="product-card">
+                    <h3>Office & Workflow Automation</h3>
+                    <p>Intelligent systems that handle repetitive tasks, schedule management, and process optimization across your entire operation.</p>
+                </div>
+                <div class="product-card">
+                    <h3>Biometric Identity Verification</h3>
+                    <p>Secure, compliant identity verification seamlessly integrated into your existing workflows and systems.</p>
+                </div>
+                <div class="product-card">
+                    <h3>Automatic & Secure Payment Links</h3>
+                    <p>Streamlined payment processing with automated invoicing, reconciliation, and secure transaction handling.</p>
+                </div>
+                <div class="product-card">
+                    <h3>Custom SaaS Platforms</h3>
+                    <p>Bespoke software solutions tailored precisely to your specific business requirements and scale.</p>
+                </div>
+                <div class="product-card">
+                    <h3>AI Receptionists & Business Agents</h3>
+                    <p>24/7 intelligent customer service that understands context, handles inquiries, and escalates appropriately.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Sectors Section -->
+    <section class="sectors" id="sectors">
+        <div class="container">
+            <h2 class="section-title">Sectors We Serve</h2>
+            <div class="sector-grid">
+                <div class="sector-card">
+                    <h3>Hospitality</h3>
+                    <ul>
+                        <li>Automated guest communications</li>
+                        <li>Smart check-in and check-out systems</li>
+                        <li>Concierge automation</li>
+                        <li>Revenue optimization</li>
+                    </ul>
+                </div>
+                <div class="sector-card">
+                    <h3>Legal Practices</h3>
+                    <ul>
+                        <li>Client intake automation</li>
+                        <li>Secure document management</li>
+                        <li>Encrypted communications</li>
+                        <li>Compliance tracking</li>
+                    </ul>
+                </div>
+                <div class="sector-card">
+                    <h3>Trade Services</h3>
+                    <ul>
+                        <li>Booking and scheduling systems</li>
+                        <li>Job tracking and management</li>
+                        <li>Automated quoting</li>
+                        <li>Customer follow-up sequences</li>
+                    </ul>
+                </div>
+                <div class="sector-card">
+                    <h3>Professional Offices</h3>
+                    <ul>
+                        <li>Client relationship management</li>
+                        <li>Workflow automation</li>
+                        <li>Analytics and reporting</li>
+                        <li>Process optimization</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Founder Section -->
+    <section class="founder">
+        <div class="container">
+            <div class="founder-content">
+                <div class="founder-image">GS</div>
+                <div class="founder-text">
+                    <h3>Graham Schubach</h3>
+                    <p class="title">CEO — Orion Dev Core</p>
+                    <p>"Orion Dev Core exists to remove friction between ideas and execution. I believe AI should amplify human intent, not replace it. We build systems that make businesses more capable, more secure, and more human."</p>
+                    <div class="contact-details">
+                        <p>📧 <a href="mailto:graham@oriondevcore.com">graham@oriondevcore.com</a></p>
+                        <p>📱 <a href="tel:+27724971810">+27 72 497 1810</a></p>
+                        <p>🗨️ <a href="https://wa.me/27703080516">+27 70 308 0516</a> (WhatsApp Business)</p>
+                        <p>🌐 <a href="https://www.oriondevcore.com" target="_blank">www.oriondevcore.com</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Mission Section -->
+    <section class="mission" id="mission">
+        <div class="container">
+            <div class="mission-content">
+                <h2>Our Mission</h2>
+                <p>We build intelligent systems that simplify work, protect trust, and scale human capability. Orion Dev Core exists to help businesses move faster, smarter, and with confidence into the AI era.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Values Section -->
+    <section class="values">
+        <div class="container">
+            <h2 class="section-title">Core Values</h2>
+            <div class="values-grid">
+                <div class="value-card">
+                    <h3>Integrity by Design</h3>
+                    <p>Security, privacy, and honesty are built into every system from day one. No compromises.</p>
+                </div>
+                <div class="value-card">
+                    <h3>Professional Excellence</h3>
+                    <p>We deliver enterprise-grade solutions, not experiments. Every deployment is production-ready.</p>
+                </div>
+                <div class="value-card">
+                    <h3>Ubuntu: Human-First Technology</h3>
+                    <p>We believe progress is collective. Technology should uplift people, not isolate them.</p>
+                </div>
+                <div class="value-card">
+                    <h3>Sustainable Innovation</h3>
+                    <p>We design systems that endure, scale responsibly, and contribute positively to the broader ecosystem.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Conversion Section -->
+    <section class="conversion" id="contact">
+        <div class="container">
+            <div class="conversion-content">
+                <h2>Speak to ORION Now</h2>
+                <p class="subtext">Let us design a bespoke automation solution for your business.</p>
+                <form class="contact-form">
+                    <input type="text" placeholder="Your Name" required>
+                    <input type="email" placeholder="Email Address" required>
+                    <input type="tel" placeholder="Contact Number" required>
+                    <select required>
+                        <option value="">Type of Business</option>
+                        <option value="hospitality">Hospitality</option>
+                        <option value="legal">Legal Practice</option>
+                        <option value="trade">Trade Services</option>
+                        <option value="professional">Professional Office</option>
+                        <option value="other">Other</option>
+                    </select>
+                    <button type="submit">Build My Solution</button>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>ORION DEV CORE</h4>
+                    <p>Automatic Payments & Streamlined Operations</p>
+                    <p style="margin-top: 1rem; font-style: italic;">AI Amplifies. I Create.</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Legal</h4>
+                    <ul>
+                        <li><a href="#privacy">Privacy Policy</a></li>
+                        <li><a href="#terms">Terms & Conditions</a></li>
+                        <li><a href="#popia">POPIA Compliance</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Contact</h4>
+                    <ul>
+                        <li><a href="mailto:graham@oriondevcore.com">graham@oriondevcore.com</a></li>
+                        <li><a href="tel:+27724971810">+27 72 497 1810</a></li>
+                        <li><a href="https://wa.me/27703080516">WhatsApp Business</a></li>
+                        <li><a href="#live-demo">Live Chat with ORION</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>© 2025 Orion Dev Core. All rights reserved.</p>
+                <p class="claude-credit">Website crafted with Claude AI by Anthropic</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Create animated constellation background
+        const constellation = document.getElementById('constellation');
+        for (let i = 0; i < 150; i++) {
+            const star = document.createElement('div');
+            star.className = 'constellation';
+            star.style.left = Math.random() * 100 + '%';
+            star.style.top = Math.random() * 100 + '%';
+            star.style.animationDelay = Math.random() * 4 + 's';
+            constellation.appendChild(star);
+        }
+
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+
+        // Form submission handler
+        document.querySelector('.contact-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            // You can integrate with your backend or email service here
+            alert('Thank you for your interest. Graham will contact you shortly.');
+            this.reset();
+        });
+    </script>
+</body>
+  </html>
